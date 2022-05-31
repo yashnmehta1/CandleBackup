@@ -46,7 +46,7 @@ mheaders, iheaders, mToken, iToken, apiip, userid, source, market_data_appKey, m
 contract_full,contract_fo,contract_eq,contract_cd,heads = get_contract_master(False)
 
 today = datetime.datetime.today().strftime('%d%m%Y')
-filename = 'candleBackup//%s.csv'%today
+filename = 'BackupData//%s.csv'%today
 print(filename)
 f = open(filename, "w")
 for i in contract_eq:
