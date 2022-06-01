@@ -3,8 +3,30 @@ from configReader import *
 
 from os import makedirs,path
 
+# login
+def login():
+    try:
+        mheaders, iheaders, mToken, iToken, apiip, userid, source, market_data_appKey, market_data_secretKey, ia_appKey, ia_secretKey, clist, DClient, broadcastMode = readConfig_All()
+        refresh_config()
+        payload = {"secretKey": self.IASecret,"appKey": self.IAKey,"source": self.source}
+        login_url = self.URL + '/interactive/user/session'
+        login_access = requests.post(login_url, json=payload)
+        # print(login_url,login_access.text)
+        logging.info(str(login_access.text).replace('\n','\t\t\t\t'))
 
+        data = login_access.json()
+        if login_access.status_code == 200:
+            data = login_access.json()
+            result = data['result']
+            a='successfull'
+            token = result['token']
+            #####################################  clist  ###########################################################
+            writeITR(token,self.userID,self.client_list)
+    except:
+        print(traceback.print_exc())
+        logging.error(sys.exc_info())
 
+######################
 def opnfdbtb2(self):
     try:
         today = datetime.datetime.today().strftime('%d%m%Y')
