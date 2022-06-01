@@ -59,7 +59,7 @@ def backup_write(token,mheaders):
     c = b.split(',')
     return c
 
-
+login()
 a=readConfig_All()
 
 mheaders, iheaders, mToken, iToken, apiip, userid, source, market_data_appKey, market_data_secretKey, ia_appKey, ia_secretKey, clist, DClient, broadcastMode = readConfig_All()
