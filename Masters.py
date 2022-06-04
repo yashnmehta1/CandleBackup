@@ -6,11 +6,12 @@ import pandas as pd
 import datatable as dt
 import requests
 import sys
+from configReader import readConfig_All
 import json
 import numpy
 import os
-from configReader import *
-# configReaderloc1 = os.getcwd().split('Application')
+
+
 contractDir = 'contract_df.csv'
 # print()
 
@@ -180,7 +181,7 @@ def assetTokenWork( a):
 
 
 
-def get_contract_master(validation):
+def getMaster(validation):
     try:
         Symbol_Expiry_Dict = {}
         if(validation==True):
@@ -198,7 +199,7 @@ def get_contract_master(validation):
             ####################################################################################
 
             ############################# Save as Raw Text ###############################
-            contractFO_raw1 = os.path.join(loc1[0] ,'Resourses','contractFO_raw.txt')
+            contractFO_raw1 = 'contractFO_raw.txt'
             with open (contractFO_raw1,'w') as f:
                 f.write(abc)
             f.close()
@@ -207,9 +208,9 @@ def get_contract_master(validation):
 
             contractFo1 = pd.read_csv(contractFO_raw1, header=None, sep='|'
                                       ,names=['ExchangeSegment', 'Token', 'instrument_type1', 'symbol', 'Stock_name',
-                                                'instrument_type', ' NameWithSeries', 'InstrumentID', 'PriceBand.High',
-                                                'PriceBand.Low','FreezeQty', 'tick_size', 'lot_size', 'Multiplier',
-                                                 'UnderlyingInstrumentId','IndexName','ContractExpiration', 'strike1', 'OptionType'])
+                                              'instrument_type', ' NameWithSeries', 'InstrumentID', 'PriceBand.High',
+                                              'PriceBand.Low','FreezeQty', 'tick_size', 'lot_size', 'Multiplier',
+                                              'UnderlyingInstrumentId','IndexName','ContractExpiration', 'strike1', 'OptionType'])
 
             contractFo1 = contractFo1[contractFo1['instrument_type1']!=4] # type 4 is spread contract that we should include but on later stage of product dev
 
@@ -237,14 +238,20 @@ def get_contract_master(validation):
             contract_fo = (contract_fo[contract_fo[:, 2].argsort()])
             strat_point = (contract_fo[0][2])
             end_point = (contract_fo[-1][2])
+
+            print('strat_point',strat_point,'end_point',end_point)
             gap = end_point - strat_point
-            temp_df1 = np.arange(start=35000, stop=gap + 1, step=1)
+            temp_df1 = np.arange(start=35000, stop=gap + 35001, step=1)
             raw_token = contract_fo[:, 2]
             total_token = np.hstack([raw_token, temp_df1])
             v, r = np.unique(total_token, return_counts=True)
-            unique_token = v[np.where(r == 1)]
 
-            # print(unique_token,unique_token.shape)
+
+            unique_token = v[np.where(r == 1)]
+            print(unique_token,unique_token.shape)
+
+
+
             # print('unique_token.shape',unique_token.shape)
 
             temp_rows = np.empty((unique_token.shape[0], 17), dtype=object)
@@ -253,15 +260,29 @@ def get_contract_master(validation):
                                                                                    '', '', '', '', '',
                                                                                    '', '', 0.0,0.0, 0,
                                                                                    0.0, 0.0, 0,0.0,0.0]
-            contract_fo = np.vstack([contract_fo, temp_rows])
-            contract_fo = (contract_fo[contract_fo[:, 2].argsort()])
+            contract_fo1 = np.vstack([contract_fo, temp_rows])
+            contract_fo = (contract_fo1[contract_fo1[:, 2].argsort()])
 
-        ##################### adding extra columns for additional fields ##########
+
+
+            contract_fox = contract_fo[contract_fo[:, 2].argsort()]
+            iklo = 35000
+
+
+            for i in contract_fox:
+                if(iklo!=i[2]):
+                    print(iklo,i)
+                    time.sleep(1)
+                iklo +=1
+
+
+
+            ##################### adding extra columns for additional fields ##########
             bdf = np.zeros((contract_fo.shape[0], 21))
             contract_fo = np.hstack([contract_fo, bdf])
-        ################################################################
+            ################################################################
 
-        ########################  Expiry Type #########################
+            ########################  Expiry Type #########################
             unique_symbols = np.unique(contract_fo[:, 3])
 
             for i in unique_symbols:
@@ -283,13 +304,13 @@ def get_contract_master(validation):
 
                     if (jk == 0):
                         Symbol_Expiry_Dict[i][0] = ik
-                        contract_fo[token_list, 33] = 1
+                        contract_fo[token_list, 37] = 1
                     elif (jk == 1):
                         Symbol_Expiry_Dict[i][1] = ik
-                        contract_fo[token_list, 33] = 2
+                        contract_fo[token_list, 37] = 2
                     else:
                         Symbol_Expiry_Dict[i][2] = ik
-                        contract_fo[token_list, 33] = 3
+                        contract_fo[token_list, 37] = 3
                 fltr1 = np.asarray(['FUTSTK', 'FUTIDX'])
                 filteredDf1 = filteredDf[np.in1d(filteredDf[:, 5], fltr1)]
 
@@ -304,21 +325,21 @@ def get_contract_master(validation):
                     if (jk == 0):
                         if (ik == Symbol_Expiry_Dict[i][0]):
                             Symbol_Expiry_Dict[i][3] = ik
-                            contract_fo[token_list, 33] = 4
+                            contract_fo[token_list, 37] = 4
                         else:
                             Symbol_Expiry_Dict[i][4] = ik
-                            contract_fo[token_list, 33] = 5
+                            contract_fo[token_list, 37] = 5
                     elif (jk == 1):
                         Symbol_Expiry_Dict[i][5] = ik
-                        contract_fo[token_list, 33] = 6
+                        contract_fo[token_list, 37] = 6
                     else:
                         Symbol_Expiry_Dict[i][6] = ik
-                        contract_fo[token_list, 33] = 7
+                        contract_fo[token_list, 37] = 7
 
-        ################################################################
+            ################################################################
 
 
-        ###################### working for strike diff ####################
+            ###################### working for strike diff ####################
             unique_symbols = np.unique(contract_fo[:, 3])
             for i in unique_symbols:
                 if (i != ''):
@@ -332,10 +353,10 @@ def get_contract_master(validation):
                     median1 = round(uniquq_strk.shape[0] / 2)
                     strikeDiff = float(uniquq_strk[median1]) - float(uniquq_strk[median1 - 1])
                     contract_fo[np.where(contract_fo[:, 3] == i), 32] = strikeDiff
-    ################################################################
+            ################################################################
 
 
-    # ############################## future token ##############################
+            # ############################## future token ##############################
             fltr = np.asarray(['NSEFO'])
             lua = contract_fo[np.in1d(contract_fo[:, 0], fltr)]
             fltr1 = np.asarray(['FUTIDX', 'FUTSTK'])
@@ -352,9 +373,9 @@ def get_contract_master(validation):
                     contract_fo[np.where(contract_fo[:, 3] == i), 15] = xxxx
                     # futureTokenDict[i] = xxxx
 
-    ####################################################################
+            ####################################################################
 
-    ###################### bhavcopy fo ###################
+            ###################### bhavcopy fo ###################
             a = pd.read_csv('fo_bhav.csv')
             a['EXPIRY_DT'] = a['EXPIRY_DT'].apply(expWork1)
             a['STRIKE_PR'] = a['STRIKE_PR'].apply(strkwork1)
@@ -362,7 +383,7 @@ def get_contract_master(validation):
             b = a.to_numpy()
 
             c = (b[b[:, 3].argsort()])
-            contract_fo = (contract_fo[contract_fo[:, 2].argsort()])
+            contract_fo = contract_fo[contract_fo[:, 2].argsort()]
 
             for i in unique_symbols:
                 fltr = np.asarray([i])
@@ -380,11 +401,11 @@ def get_contract_master(validation):
                         contract_fo[zz[0][2] - 35000, 16] = ik[9]
                         contract_fo[zz[0][2] - 35000, 17] = ik[9]
                     except:
-                        print('bhavcopy error',ik)
+                        # print('bhavcopy error',ik)
 
                         pass
 
-    # ############################## future token ##############################
+            # ############################## future token ##############################
             fltr = np.asarray(['NSEFO'])
             lua = contract_fo[np.in1d(contract_fo[:, 0], fltr)]
             fltr1 = np.asarray(['FUTIDX', 'FUTSTK'])
@@ -397,12 +418,21 @@ def get_contract_master(validation):
                 if (i != ''):
                     lua2 = lua1[np.in1d(lua1[:, 3], np.asarray([i]))]
                     xxxx = lua2[lua2[:, 6].argsort()][0][2]
-                    contract_fo[np.where(contract_fo[:, 3] == i), 15] = xxxx
+                    contract_fo[np.where(contract_fo[:, 3] == i), 17] = xxxx
                     futureTokenDict[i] = xxxx
 
-    ####################################################################
+            ####################################################################
 
-    ################## working for moneyness ##########################
+            ################## working for moneyness ##########################
+
+            # for op in contract_fo:
+            #
+            #     if(iklo==op[2]):
+            #         print(iklo)
+            #     else:
+            #         print(iklo,op)
+            #         time.sleep(0.1)
+            #     iklo +=1
 
             for i in unique_symbols:
                 if (i != ''):
@@ -410,49 +440,45 @@ def get_contract_master(validation):
                     filterDf2 = contract_fo[np.in1d(contract_fo[:, 3], fltr)]
 
                     tkn = filterDf2[0][15]
+
+
+
                     prce = contract_fo[tkn - 35000, 16]
                     strikeDif1 = contract_fo[tkn - 35000, 32]
                     # print('filterDf2',i,filterDf2[0][15],prce,strikeDif1)
                     atm = int(prce / strikeDif1) * strikeDif1
 
-                    # fltr = np.asarray([i])
-                    # filterDf2 = contract_fo[np.in1d(contract_fo[:, 3], fltr)]
-
-                    # fltr2 = np.asarray([Symbol_Expiry_Dict[i][0]])
-                    # filterDf3=filterDf2[np.in1d(filterDf2[:, 3], fltr2)]
-
                     fltr = np.asarray(['CE'])
                     filterDf3 = filterDf2[np.in1d(filterDf2[:, 8], fltr)]
 
                     atmToken = filterDf3[np.where(filterDf3[:, 12] == atm), 2][0]
-
                     atmToken1 = np.subtract(atmToken, 35000).tolist()
-                    # print(i, atmToken1)
-                    contract_fo[atmToken1, 27] = 1
+
+                    contract_fo[atmToken1, 31] = 1
 
                     otmToken = filterDf3[np.where(filterDf3[:, 12] > atm), 2][0]
                     # print(i, atmToken1)
                     otmToken1 = np.subtract(otmToken, 35000).tolist()
-                    contract_fo[otmToken1, 27] = 3
+                    contract_fo[otmToken1, 31] = 3
 
                     itmToken = filterDf3[np.where(filterDf3[:, 12] < atm), 2][0]
                     itmToken1 = np.subtract(itmToken, 35000).tolist()
-                    contract_fo[itmToken1, 27] = 5
+                    contract_fo[itmToken1, 31] = 5
 
                     fltr = np.asarray(['PE'])
                     filterDf3 = filterDf2[np.in1d(filterDf2[:, 8], fltr)]
 
                     atmToken = filterDf3[np.where(filterDf3[:, 12] == atm), 2][0]
                     atmToken1 = np.subtract(atmToken, 35000).tolist()
-                    contract_fo[atmToken1, 27] = 2
+                    contract_fo[atmToken1, 31] = 2
 
                     otmToken = filterDf3[np.where(filterDf3[:, 12] < atm), 2][0]
                     otmToken1 = np.subtract(otmToken, 35000).tolist()
-                    contract_fo[otmToken1, 27] = 4
+                    contract_fo[otmToken1, 31] = 4
 
                     itmToken = filterDf3[np.where(filterDf3[:, 12] > atm), 2][0]
                     itmToken1 = np.subtract(itmToken, 35000).tolist()
-                    contract_fo[itmToken1, 27] = 6
+                    contract_fo[itmToken1, 31] = 6
 
             ########################################################################
 
@@ -497,14 +523,14 @@ def get_contract_master(validation):
 
             for i in contract_fo:
                 if(i[8] == 'CE'):
-                    contract_fo[i[2]-35000,34] = contract_fo1_ce_pd1.loc[i[2],'e']
+                    contract_fo[i[2]-35000,38] = contract_fo1_ce_pd1.loc[i[2],'e']
             for i in contract_fo:
                 if(i[8] == 'PE'):
                     try:
-                        contract_fo[i[2]-35000,34] = contract_fo1_pe_pd1.loc[i[2],'a']
+                        contract_fo[i[2]-35000,38] = contract_fo1_pe_pd1.loc[i[2],'a']
                     except:
                         print('error',i[2],contract_fo1_pe_pd1.loc[i[2]])
-        ############ option chain master #########################
+            ############ option chain master #########################
 
 
 
@@ -516,7 +542,7 @@ def get_contract_master(validation):
             data_p = req.json()
             abc = data_p['result']
 
-            ContractEQ1 = os.path.join(loc1[0] ,'Resourses','ContractEQ')
+            ContractEQ1 = 'ContractEQ'
             with open(ContractEQ1, 'w') as f:
                 f.write(abc)
             f.close()
@@ -560,7 +586,7 @@ def get_contract_master(validation):
             temp_rows = np.empty((unique_token.shape[0], 17), dtype=object)
             temp_rows[:, 2] = unique_token
             temp_rows[:, [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,15,16]] = ['NSECM', '', '', '', '', '', '', '', 0.0,
-                                                                             0.0, 0, '', 0.0, 0,0.0,0.0]
+                                                                                   0.0, 0, '', 0.0, 0,0.0,0.0]
 
             contract_eq = np.vstack([contract_eq, temp_rows])
             contract_eq = (contract_eq[contract_eq[:, 2].argsort()])
@@ -613,7 +639,7 @@ def get_contract_master(validation):
             #                      'asset_token', 'tick_size', 'lot_size', 'strike1','FreezeQty']]
             #
             # cndMCX = dt.Frame(cndfMCX1)
-        ##########################################################################################################################################
+            ##########################################################################################################################################
 
 
             payloadsub = {"exchangeSegmentList": ["NSECD"]}
@@ -622,7 +648,7 @@ def get_contract_master(validation):
             data_p = req.json()
             abc = data_p['result']
             # print(abc)
-            contractCD_raw = os.path.join(loc1[0] ,'Resourses','contractCD_raw.txt')
+            contractCD_raw = 'contractCD_raw.txt'
             with open (contractCD_raw,'w') as f:
                 f.write(abc)
             f.close()
@@ -631,7 +657,7 @@ def get_contract_master(validation):
                                               'Token', 'instrument_type1', 'symbol', 'Stock_name','instrument_type',
                                               'NameWithSeries', 'InstrumentID', 'PriceBand.High','PriceBand.Low','FreezeQty',
                                               'tick_size', 'lot_size', 'Multiplier',
-                                                 'UnderlyingInstrumentId','IndexName','ContractExpiration', 'strike1', 'OptionType'])
+                                              'UnderlyingInstrumentId','IndexName','ContractExpiration', 'strike1', 'OptionType'])
             contractCD1 = contractCD1[contractCD1['instrument_type1']!=4]
             contractCD1['Exchange'] = 'NSECD'
             # contractCD1['Segment'] = 'F'
@@ -664,7 +690,7 @@ def get_contract_master(validation):
             temp_rows = np.empty((unique_token.shape[0], 17), dtype=object)
             temp_rows[:, 2] = unique_token
             temp_rows[:, [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,15,16]] = ['NSECD', '', '', '', '', '', '', '', 0.0,
-                                                                             0.0, 0, '', 0.0, 0,0.0,0.0]
+                                                                                   0.0, 0, '', 0.0, 0,0.0,0.0]
             contract_cd = np.vstack([contract_cd, temp_rows])
             contract_cd = (contract_cd[contract_cd[:, 2].argsort()])
             ##################### adding extra columns for additional fields ##########
@@ -687,9 +713,10 @@ def get_contract_master(validation):
             contract_df = pd.concat([fo_contract_df11,Eq_contract_df1,cd_contract_df1])
             contract_df.columns = heads
             # contract_df['instrument_type'] =  contract_df['instrument_type'].fillna('Equity')
-            contract_df1=os.path.join(loc1[0],'Resourses','ContractMasters','contract_df.csv')
+            contract_df1='contract_df.csv'
             contract_df.to_csv(contract_df1,index=False)
             contract_full = contract_df.to_numpy()
+
             return contract_full,contract_fo,contract_eq,contract_cd,heads
         else:
             contract_df = pd.read_csv(contractDir,low_memory=False,)
@@ -720,3 +747,5 @@ def get_contract_master(validation):
         print(sys.exc_info(), "@download master")
 
 
+
+# getMaster(True)
